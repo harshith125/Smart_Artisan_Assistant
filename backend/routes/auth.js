@@ -6,24 +6,32 @@ const User = require('../models/User')
 
 // REGISTER
 router.post('/register', async (req, res) => {
-  const { name, email, password, role } = req.body
+  const { name, password } = req.body
   try {
-    const existing = await User.findOne({ email })
-    if (existing) return res.status(400).json({ message: 'Email already registered' })
+    // Generate Artisan ID
+    const artisanId = 'ART-' + Math.random().toString(36).substr(2, 6).toUpperCase()
+    const email = `artisan_${Date.now()}@example.com`
 
     const hashed = await bcrypt.hash(password, 10)
-    const user = await User.create({ name, email, password: hashed, role })
-    res.status(201).json({ message: 'Registered successfully. Await admin approval.' })
+    const user = await User.create({ name, email, artisanId, password: hashed, role: 'artisan' })
+    res.status(201).json({ 
+      message: 'Registered successfully. Await admin approval.',
+      artisanId: user.artisanId
+    })
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: 'Server error' })
   }
 })
 
 // LOGIN
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body
+  const { identifier, password } = req.body
   try {
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ 
+      $or: [{ email: identifier }, { artisanId: identifier }] 
+    })
+    
     if (!user) return res.status(400).json({ message: 'Invalid credentials' })
 
     const match = await bcrypt.compare(password, user.password)
@@ -34,15 +42,16 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, role: user.role, name: user.name },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'secret',
       { expiresIn: '7d' }
     )
 
     res.json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: { id: user._id, name: user.name, artisanId: user.artisanId, email: user.email, role: user.role }
     })
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: 'Server error' })
   }
 })

@@ -1,39 +1,39 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
 function Login() {
   const navigate = useNavigate();
-  const [hoveredRole, setHoveredRole] = useState(null);
+  const [form, setForm] = useState({ identifier: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const roles = [
-    {
-      id: 'admin',
-      title: 'Administrator',
-      desc: 'Manage users, analytics, and platform settings',
-      path: '/admin/dashboard',
-      color: '#8b5cf6',
-      icon: '🛡️'
-    },
-    {
-      id: 'accountant',
-      title: 'Accountant',
-      desc: 'Handle payments, billing, and financial reports',
-      path: '/accountant/dashboard',
-      color: '#10b981',
-      icon: '📊'
-    },
-    {
-      id: 'artisan',
-      title: 'Artisan',
-      desc: 'Manage productions, AI assistant, and tasks',
-      path: '/artisan/dashboard',
-      color: '#f59e0b',
-      icon: '🎨'
+  useEffect(() => {
+    // Auth is bypassed right now for core development, jump straight to dashboard
+    navigate('/artisan/dashboard');
+  }, [navigate]);
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/auth/login', form);
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+
+      const role = res.data.user.role;
+      if (role === 'artisan') navigate('/artisan/dashboard');
+      else if (role === 'accountant') navigate('/accountant/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const handleLogin = (path) => {
-    navigate(path);
   };
 
   return (
@@ -42,39 +42,47 @@ function Login() {
       <div style={styles.blob2}></div>
       
       <div style={styles.glassCard}>
+        <div style={styles.iconWrapper}>🔒</div>
         <h1 style={styles.title}>Welcome Back</h1>
-        <p style={styles.subtitle}>Select your role to access the dashboard</p>
+        <p style={styles.subtitle}>Enter your details to access the dashboard</p>
         
-        <div style={styles.rolesGrid}>
-          {roles.map((role) => (
-            <div
-              key={role.id}
-              style={{
-                ...styles.roleCard,
-                ...(hoveredRole === role.id ? styles.roleCardHover : {}),
-                borderColor: hoveredRole === role.id ? role.color : 'rgba(255,255,255,0.1)',
-                transform: hoveredRole === role.id ? 'translateY(-5px)' : 'none',
-              }}
-              onMouseEnter={() => setHoveredRole(role.id)}
-              onMouseLeave={() => setHoveredRole(null)}
-              onClick={() => handleLogin(role.path)}
-            >
-              <div style={{ ...styles.iconWrapper, backgroundColor: `${role.color}20`, color: role.color }}>
-                {role.icon}
-              </div>
-              <h3 style={styles.roleTitle}>{role.title}</h3>
-              <p style={styles.roleDesc}>{role.desc}</p>
-              
-              <button style={{
-                ...styles.loginBtn,
-                backgroundColor: hoveredRole === role.id ? role.color : 'rgba(255,255,255,0.05)',
-                color: hoveredRole === role.id ? '#fff' : '#aaa'
-              }}>
-                Enter Dashboard &rarr;
-              </button>
-            </div>
-          ))}
-        </div>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Email or Artisan ID</label>
+            <input 
+              name="identifier" 
+              type="text" 
+              value={form.identifier} 
+              onChange={handleChange} 
+              style={styles.input}
+              placeholder="e.g. ART-1A2B3C or john@example.com"
+              required 
+            />
+          </div>
+          
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Password</label>
+            <input 
+              name="password" 
+              type="password" 
+              value={form.password} 
+              onChange={handleChange} 
+              style={styles.input}
+              placeholder="••••••••"
+              required 
+            />
+          </div>
+
+          {error && <div style={styles.errorMessage}>{error}</div>}
+          
+          <button type="submit" style={styles.submitBtn} disabled={loading}>
+            {loading ? 'Authenticating...' : 'Sign In'}
+          </button>
+        </form>
+
+        <p style={styles.footerText}>
+          Don't have an account? <Link to="/register" style={styles.link}>Register</Link>
+        </p>
       </div>
     </div>
   );
@@ -126,73 +134,94 @@ const styles = {
     border: '1px solid rgba(255, 255, 255, 0.1)',
     borderRadius: '24px',
     padding: '3rem',
-    maxWidth: '1000px',
+    maxWidth: '450px',
     width: '100%',
     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-    textAlign: 'center'
-  },
-  title: {
-    color: '#ffffff',
-    fontSize: '2.5rem',
-    fontWeight: '700',
-    marginBottom: '0.5rem',
-    letterSpacing: '-0.025em'
-  },
-  subtitle: {
-    color: '#94a3b8',
-    fontSize: '1.1rem',
-    marginBottom: '3rem'
-  },
-  rolesGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '2rem'
-  },
-  roleCard: {
-    background: 'rgba(15, 23, 42, 0.6)',
-    border: '1px solid rgba(255,255,255,0.05)',
-    borderRadius: '16px',
-    padding: '2rem',
-    cursor: 'pointer',
-    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
     textAlign: 'center'
   },
   iconWrapper: {
     width: '64px',
     height: '64px',
     borderRadius: '16px',
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    color: '#8b5cf6',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '2rem',
-    marginBottom: '1.5rem',
-    transition: 'transform 0.3s ease'
+    margin: '0 auto 1.5rem auto'
   },
-  roleTitle: {
-    color: '#f8fafc',
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    marginBottom: '0.75rem'
+  title: {
+    color: '#ffffff',
+    fontSize: '2rem',
+    fontWeight: '700',
+    marginBottom: '0.5rem',
+    letterSpacing: '-0.025em'
   },
-  roleDesc: {
+  subtitle: {
     color: '#94a3b8',
-    fontSize: '0.95rem',
-    lineHeight: '1.5',
-    marginBottom: '2rem',
-    flexGrow: 1
+    fontSize: '1rem',
+    marginBottom: '2rem'
   },
-  loginBtn: {
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem',
+    textAlign: 'left'
+  },
+  inputGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  label: {
+    color: '#cbd5e1',
+    fontSize: '0.9rem',
+    fontWeight: '500'
+  },
+  input: {
     width: '100%',
-    padding: '0.75rem 1.5rem',
+    padding: '0.75rem 1rem',
+    borderRadius: '12px',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    color: '#f8fafc',
+    fontSize: '1rem',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s ease'
+  },
+  errorMessage: {
+    padding: '0.75rem',
+    borderRadius: '8px',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    color: '#ef4444',
+    fontSize: '0.9rem',
+    textAlign: 'center',
+    border: '1px solid rgba(239, 68, 68, 0.3)'
+  },
+  submitBtn: {
+    width: '100%',
+    padding: '0.875rem',
     borderRadius: '12px',
     border: 'none',
+    backgroundColor: '#8b5cf6',
+    color: '#ffffff',
     fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease'
+    marginTop: '0.5rem',
+    transition: 'background-color 0.2s ease'
+  },
+  footerText: {
+    color: '#94a3b8',
+    fontSize: '0.9rem',
+    marginTop: '2rem'
+  },
+  link: {
+    color: '#8b5cf6',
+    textDecoration: 'none',
+    fontWeight: '500'
   }
 };
 

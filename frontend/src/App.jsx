@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import Login from './pages/Login'
+import Register from './pages/Register'
+import PrivateRoute from './components/PrivateRoute'
 
 // Artisan Pages
 import ArtisanDashboard from './pages/artisan/Dashboard'
@@ -24,6 +26,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Artisan Routes */}
         <Route path="/artisan/dashboard" element={<ArtisanDashboard />} />

@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Package, IndianRupee, Plus, Bot, BarChart2 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
 function ArtisanDashboard() {
@@ -10,45 +12,18 @@ function ArtisanDashboard() {
     if (stored && stored !== 'undefined') user = JSON.parse(stored) || user;
   } catch (e) {}
 
-  // State to trigger re-renders
   const [productions, setProductions] = React.useState([]);
 
   React.useEffect(() => {
-    const saved = localStorage.getItem('productions');
-    if (saved) {
-      // Migrate old data on the fly (change $ to ₹, change earnings to price)
-      let parsed = JSON.parse(saved);
-      let needsUpdate = false;
-      parsed = parsed.map(p => {
-        let updatedP = { ...p };
-        if (updatedP.earnings) {
-          updatedP.price = updatedP.earnings;
-          delete updatedP.earnings;
-          needsUpdate = true;
-        }
-        if (updatedP.price && updatedP.price.includes('$')) {
-          // Scale it up so it looks right in INR
-          const num = parseInt(updatedP.price.replace(/[^0-9]/g, ''), 10);
-          updatedP.price = `₹${num * 10}`; 
-          needsUpdate = true;
-        }
-        return updatedP;
-      });
-      
-      if (needsUpdate) {
-        localStorage.setItem('productions', JSON.stringify(parsed));
+    const fetchProductions = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/artisan/productions');
+        setProductions(res.data);
+      } catch (err) {
+        console.error('Failed to fetch productions:', err);
       }
-      setProductions(parsed);
-    } else {
-      const defaults = [
-        { id: 'PRD-001', item: 'Handcrafted Wooden Chair', date: '2026-05-15', price: '₹2500' },
-        { id: 'PRD-002', item: 'Ceramic Vase Set', date: '2026-05-14', price: '₹800' },
-        { id: 'PRD-003', item: 'Leather Wallet', date: '2026-05-12', price: '₹1200' },
-        { id: 'PRD-004', item: 'Knitted Wool Scarf', date: '2026-05-10', price: '₹600' }
-      ];
-      localStorage.setItem('productions', JSON.stringify(defaults));
-      setProductions(defaults);
-    }
+    };
+    fetchProductions();
   }, []);
 
   // Calculate dynamic stats
@@ -67,21 +42,21 @@ function ArtisanDashboard() {
       <div style={styles.container}>
         {/* Welcome Section */}
         <div style={styles.header}>
-          <h1 style={styles.welcomeText}>Welcome back, {user.name}! 👋</h1>
+          <h1 style={styles.welcomeText}>Welcome back, {user.name}!</h1>
           <p style={styles.subtitle}>Here is what's happening with your productions today.</p>
         </div>
 
         {/* 2 Summary Cards */}
         <div style={styles.statsGrid}>
           <div style={styles.statCard}>
-            <div style={styles.statIconWrapper}>📦</div>
+            <div style={styles.statIconWrapper}><Package size={22} /></div>
             <div>
               <p style={styles.statLabel}>Total Productions</p>
               <h2 style={styles.statValue}>{totalProductions}</h2>
             </div>
           </div>
           <div style={{ ...styles.statCard, borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-            <div style={{ ...styles.statIconWrapper, backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>💰</div>
+            <div style={{ ...styles.statIconWrapper, backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}><IndianRupee size={22} /></div>
             <div>
               <p style={styles.statLabel}>Total Value Created</p>
               <h2 style={styles.statValue}>₹{totalEarnings.toLocaleString('en-IN')}</h2>
@@ -93,13 +68,13 @@ function ArtisanDashboard() {
         <h3 style={styles.sectionTitle}>Quick Actions</h3>
         <div style={styles.actionsGrid}>
           <button style={styles.actionBtn} onClick={() => navigate('/artisan/add-production')}>
-            <span style={styles.actionIcon}>➕</span> Add Production
+            <span style={styles.actionIcon}><Plus size={18} /></span> Add Production
           </button>
           <button style={styles.actionBtn} onClick={() => navigate('/artisan/ai-assistant')}>
-            <span style={styles.actionIcon}>🤖</span> AI Assistant
+            <span style={styles.actionIcon}><Bot size={18} /></span> AI Assistant
           </button>
           <button style={styles.actionBtn} onClick={() => navigate('/artisan/reports')}>
-            <span style={styles.actionIcon}>📊</span> View Reports
+            <span style={styles.actionIcon}><BarChart2 size={18} /></span> View Reports
           </button>
         </div>
 

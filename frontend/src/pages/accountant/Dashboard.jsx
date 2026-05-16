@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BarChart2 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
 export default function AccountantDashboard() {
   const [productions, setProductions] = useState([]);
   
   useEffect(() => {
-    const saved = localStorage.getItem('productions');
-    if (saved) {
-      // Accountant sees all listed productions
-      setProductions(JSON.parse(saved));
-    }
+    const fetchProductions = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/artisan/productions');
+        setProductions(res.data);
+      } catch (err) {
+        console.error('Failed to fetch productions:', err);
+      }
+    };
+    fetchProductions();
   }, []);
 
   const totalEarnings = productions.reduce((acc, curr) => {
@@ -24,7 +30,7 @@ export default function AccountantDashboard() {
       <Navbar />
       <div style={styles.container}>
         <div style={styles.header}>
-          <h1 style={styles.title}>Accountant Dashboard 📊</h1>
+          <h1 style={styles.title}><BarChart2 size={30} style={{ display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }} />Accountant Dashboard</h1>
           <p style={styles.subtitle}>Review all registered productions and platform revenue.</p>
         </div>
 

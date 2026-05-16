@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { Palette } from 'lucide-react';
 
 function Register() {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ function Register() {
       <div style={styles.blob2}></div>
       
       <div style={styles.glassCard}>
-        <div style={styles.iconWrapper}>🎨</div>
+        <div style={styles.iconWrapper}><Palette size={28} /></div>
         <h1 style={styles.title}>Register as Artisan</h1>
         <p style={styles.subtitle}>Join the platform to manage your productions</p>
         

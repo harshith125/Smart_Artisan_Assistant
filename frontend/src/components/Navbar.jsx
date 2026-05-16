@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Palette } from 'lucide-react';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function Navbar() {
     <nav style={styles.nav}>
       <div style={styles.container}>
         <div style={styles.logo}>
-          <span style={styles.icon}>🎨</span>
+          <Palette style={styles.icon} size={24} />
           <span style={styles.title}>Smart Artisan</span>
         </div>
         

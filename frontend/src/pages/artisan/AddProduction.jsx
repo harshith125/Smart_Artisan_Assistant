@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { CheckCircle } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 
 export default function AddProduction() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
   
   const [form, setForm] = useState({
     itemName: '',
@@ -20,38 +23,25 @@ export default function AddProduction() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
-    // Simulate network request
-    setTimeout(() => {
-      // 1. Create a new production object
-      const newProduction = {
-        id: `PRD-${Math.floor(Math.random() * 900) + 100}`,
-        item: form.itemName,
-        date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-        price: form.basePrice ? `₹${form.basePrice}` : '₹0'
-      };
-
-      // 2. Read existing from localStorage
-      const existing = localStorage.getItem('productions');
-      let productionsArray = existing ? JSON.parse(existing) : [];
-
-      // 3. Add to the top of the list
-      productionsArray.unshift(newProduction);
-
-      // 4. Save back to localStorage
-      localStorage.setItem('productions', JSON.stringify(productionsArray));
-
+    try {
+      await axios.post('http://localhost:5000/api/artisan/productions', form);
+      
       setLoading(false);
       setSuccess(true);
       
-      // Navigate back to dashboard after 2 seconds
       setTimeout(() => {
         navigate('/artisan/dashboard');
       }, 2000);
-    }, 800);
+    } catch (err) {
+      console.error('Error adding production:', err);
+      setError('Failed to add production. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,12 +60,17 @@ export default function AddProduction() {
         <div style={styles.card}>
           {success ? (
             <div style={styles.successState}>
-              <div style={styles.successIcon}>✅</div>
+              <div style={styles.successIcon}><CheckCircle size={56} color="#10b981" /></div>
               <h2>Production Added Successfully!</h2>
               <p>Redirecting to dashboard...</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={styles.form}>
+              {error && (
+                <div style={{ padding: '1rem', backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.5)' }}>
+                  {error}
+                </div>
+              )}
               <div style={styles.grid}>
                 
                 {/* Item Name */}

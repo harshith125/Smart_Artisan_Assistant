@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { Lock } from 'lucide-react';
 
 function Login() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ function Login() {
       <div style={styles.blob2}></div>
       
       <div style={styles.glassCard}>
-        <div style={styles.iconWrapper}>🔒</div>
+        <div style={styles.iconWrapper}><Lock size={28} /></div>
         <h1 style={styles.title}>Welcome Back</h1>
         <p style={styles.subtitle}>Enter your details to access the dashboard</p>
         
